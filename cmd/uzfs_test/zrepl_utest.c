@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -635,7 +636,7 @@ writer_thread(void *arg)
 
 	io = kmem_alloc((sizeof (struct data_io) +
 	    warg->io_block_size), KM_SLEEP);
-	printf("Dataset generation start from offset:%ld........... \n",
+	printf("Dataset generation start from offset:%" PRId64 "........... \n",
 	    nbytes);
 	bzero(io, sizeof (struct data_io));
 	populate(io->buf, warg->io_block_size);

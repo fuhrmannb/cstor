@@ -18,6 +18,7 @@
  *
  * CDDL HEADER END
  */
+#include <inttypes.h>
 #include <sys/zfs_context.h>
 #include <sys/zfs_rlock.h>
 #include <uzfs_mgmt.h>
@@ -95,7 +96,7 @@ verify_data(char *buf, uint64_t offset, int idx, uint64_t block_size)
 	if ((buf[((i + 1) * block_size) - 1] !=
 	    (((offset + (i * block_size)) / 4096) % 128)) &&
 	    (buf[((i + 1) * block_size) - 1] != 0)) {
-		printf("error1 %lu %d in data..\n", offset+i*block_size,
+		printf("error1 %" PRIu64 " %d in data..\n", offset+i*block_size,
 		    buf[((i+1)*block_size)-1]);
 		err = 1;
 	}
@@ -126,12 +127,12 @@ verify_vol_data(void *zv, uint64_t block_size, uint64_t vol_size)
 		uzfs_read_data(zv, buf, i, len, &md);
 		for (j = 0; j < len; j++)
 			if (data[i+j] != buf[j]) {
-				printf("verify error at %lu\n", (i+j));
+				printf("verify error at %" PRIu64 "\n", (i+j));
 				exit(1);
 			}
 		for (md_tmp = md; md_tmp != NULL; md_tmp = md_tmp->next)
 			if (iodata[i/block_size] != md_tmp->metadata.io_num) {
-				printf("verify merror at %lu %lu %lu\n",
+				printf("verify merror at %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
 				    i/block_size, md_tmp->metadata.io_num,
 				    iodata[i/block_size]);
 				exit(1);
@@ -179,7 +180,7 @@ reader_thread(void *arg)
 		    (idx + 1) * block_size, &md);
 
 		if (err != 0)
-			printf("RIO error at offset: %lu len: %lu\n", offset,
+			printf("RIO error at offset: %" PRIu64 " len: %" PRIu64 "\n", offset,
 			    (idx + 1) * block_size);
 		verify_data(buf[idx], offset, idx, block_size);
 
@@ -195,7 +196,7 @@ reader_thread(void *arg)
 	for (j = 0; j < 15; j++)
 		umem_free(buf[j], sizeof (char) * (j + 1) * block_size);
 	if (silent == 0)
-		printf("Stopping read.. ios done: %lu data ios: %lu\n", ios,
+		printf("Stopping read.. ios done: %" PRIu64 " data ios: %" PRIu64 "\n", ios,
 		    data_ios);
 
 	mutex_enter(mtx);
@@ -287,14 +288,14 @@ writer_thread(void *arg)
 		    (uzfs_test_id == 2 && uzfs_random(2) == 0) ? NULL : &md,
 		    B_FALSE);
 		if (err != 0)
-			printf("WIO error at offset: %lu len: %lu\n", offset,
+			printf("WIO error at offset: %" PRIu64 " len: %" PRIu64 "\n", offset,
 			    (idx + 1) * block_size);
 
 		if (uzfs_test_id == 8) {
 			memcpy(&data[offset], buf[idx], (idx + 1)*block_size);
 			for (i = 0; i < (idx+1); i++) {
 				iodata[blk_offset+i] = io_num;
-//				printf("%lu: %lu\n", io_num, blk_offset + i);
+//				printf("%" PRIu64 ": %" PRIu64 "\n", io_num, blk_offset + i);
 			}
 		}
 		zfs_range_unlock(rl);
@@ -307,7 +308,7 @@ writer_thread(void *arg)
 	for (j = 0; j < 15; j++)
 		umem_free(buf[j], sizeof (char) * (j + 1) * block_size);
 	if (silent == 0)
-		printf("Stopping write.. ios done: %lu\n", ios);
+		printf("Stopping write.. ios done: %" PRIu64 "\n", ios);
 
 	mutex_enter(mtx);
 	if (total_ios != NULL)
@@ -591,15 +592,15 @@ static void process_options(int argc, char **argv)
 	}
 
 	if (silent == 0) {
-		printf("vol size: %lu active size: %lu create: %d\n", vol_size,
+		printf("vol size: %" PRIu64 " active size: %" PRIu64 " create: %d\n", vol_size,
 		    active_size, create);
 		printf("pool: %s ds: %s Test: %s\n", pool, ds,
 		    uzfs_tests[uzfs_test_id].name);
-		printf("block size: %lu io blksize: %lu\n", block_size,
+		printf("block size: %" PRIu64 " io blksize: %" PRIu64 "\n", block_size,
 		    io_block_size);
 		printf("log: %d sync: %d silent: %d\n", log_device, sync_data,
 		    silent);
-		printf("write: %d verify: %d metaverify: %lu\n", write_op,
+		printf("write: %d verify: %d metaverify: %" PRIu64 "\n", write_op,
 		    verify, metaverify);
 		printf("total run time in seconds: %d\n", total_time_in_sec);
 	}
@@ -732,7 +733,7 @@ unit_test_fn(void *arg)
 		verify_vol_data(zv, io_block_size, active_size);
 
 	if (silent == 0)
-		printf("Total write IOs: %lu\n", total_ios);
+		printf("Total write IOs: %" PRIu64 "\n", total_ios);
 
 	cv_destroy(&cv);
 	mutex_destroy(&mtx);
@@ -751,7 +752,7 @@ check_offset_len(uint64_t offset, uint64_t len, uint64_t blocksize,
 	    blocksize, uint64_t);
 
 	if ((r_offset != exp_offset) || (r_len != exp_len)) {
-		printf("Error: %lu %lu %lu %lu %lu %lu %lu\n", offset, len,
+		printf("Error: %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 "\n", offset, len,
 		    blocksize, exp_offset, exp_len, r_offset, r_len);
 		exit(1);
 	}
@@ -770,8 +771,8 @@ check_metaobj_block_details(uint64_t offset, uint64_t len,
 
 	if ((m.r_offset != exp_r_offset) || (m.r_len != exp_r_len) ||
 	    (m.m_offset != exp_m_offset) || (m.m_len != exp_m_len)) {
-		printf("Error: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu"
-		    " %lu\n", offset, len, blocksize, metablocksize,
+		printf("Error: %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64 ""
+		    " %" PRIu64 "\n", offset, len, blocksize, metablocksize,
 		    metadatasize, exp_r_offset, exp_r_len, exp_m_offset,
 		    exp_m_len, m.r_offset, m.r_len, m.m_offset, m.m_len);
 		exit(1);

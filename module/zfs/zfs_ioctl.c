@@ -139,6 +139,7 @@
  *         deserialization failing.
  */
 #if defined(_KERNEL)
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -265,6 +266,7 @@ static int zfs_check_clearable(char *dataset, nvlist_t *props,
 int zfs_set_prop_nvlist(const char *, zprop_source_t, nvlist_t *, nvlist_t *);
 static int get_nvlist(uint64_t nvl, uint64_t size, int iflag, nvlist_t **nvp);
 #else
+#include <inttypes.h>
 #include <libuzfs.h>
 #include <sys/spa_impl.h>
 #include <sys/dsl_prop.h>
@@ -366,7 +368,7 @@ history_str_get(zfs_cmd_t *zc)
 	if (zc->zc_history == 0)
 		return (NULL);
 
-	buf = (char *)zc->zc_history;
+	buf = (char *)(uintptr_t)zc->zc_history;
 
 	return (buf);
 }
@@ -1891,7 +1893,7 @@ zfs_ioc_pool_get_history(zfs_cmd_t *zc)
 		    zc->zc_history_len, zc->zc_iflags);
 	}
 #else
-	hist_buf = (char *)zc->zc_history;
+	hist_buf = (char *)(uintptr_t)zc->zc_history;
 	error = spa_history_get(spa, &zc->zc_history_offset,
 	    &zc->zc_history_len, hist_buf);
 #endif
@@ -7498,7 +7500,7 @@ uzfs_handle_ioctl(const char *pool, zfs_cmd_t *zc, uzfs_info_t *ucmd_info)
 		break;
 	}
 	default:
-		fprintf(stderr, "ioctl(0x%lx) not supported!\n",
+		fprintf(stderr, "ioctl(0x%" PRIx64 ") not supported!\n",
 		    uzfs_cmd->ioc_num);
 		break;
 	}

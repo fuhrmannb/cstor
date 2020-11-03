@@ -74,6 +74,7 @@
  * and zvol_release()->zvol_last_close() directly as well.
  */
 
+#include <inttypes.h>
 #include <sys/dbuf.h>
 #include <sys/dmu_traverse.h>
 #include <sys/dsl_dataset.h>
@@ -450,7 +451,7 @@ uzfs_ioc_stats(zfs_cmd_t *zc, nvlist_t *nvl)
 				if (zv->uzfs_rio_histogram[i].count) {
 					sprintf(key, "%uKB", (i + 1) *
 					    ZFS_HISTOGRAM_IO_BLOCK / KB);
-					sprintf(val, "%lu/%lu/%lu",
+					sprintf(val, "%" PRIu64 "/%" PRIu64 "/%" PRIu64,
 					    zv->uzfs_rio_histogram[i].size,
 					    zv->uzfs_rio_histogram[i].count,
 					    zv->uzfs_rio_histogram[i].latency);
@@ -466,7 +467,7 @@ uzfs_ioc_stats(zfs_cmd_t *zc, nvlist_t *nvl)
 				if (zv->uzfs_wio_histogram[i].count) {
 					sprintf(key, "%uKB", (i + 1) *
 					    ZFS_HISTOGRAM_IO_BLOCK / KB);
-					sprintf(val, "%lu/%lu/%lu",
+					sprintf(val, "%" PRIu64 "/%" PRIu64 "/%" PRIu64,
 					    zv->uzfs_wio_histogram[i].size,
 					    zv->uzfs_wio_histogram[i].count,
 					    zv->uzfs_wio_histogram[i].latency);
@@ -501,7 +502,7 @@ uzfs_ioc_stats(zfs_cmd_t *zc, nvlist_t *nvl)
 				if (spa->zfs_rio_histogram[i].count) {
 					sprintf(key, "%uKB", (i + 1) *
 					    ZFS_HISTOGRAM_IO_BLOCK / KB);
-					sprintf(val, "%lu/%lu",
+					sprintf(val, "%" PRIu64 "/%" PRIu64,
 					    spa->zfs_rio_histogram[i].size,
 					    spa->zfs_rio_histogram[i].count);
 					fnvlist_add_string(innvl, key, val);
@@ -515,7 +516,7 @@ uzfs_ioc_stats(zfs_cmd_t *zc, nvlist_t *nvl)
 				if (spa->zfs_wio_histogram[i].count) {
 					sprintf(key, "%uKB", (i + 1) *
 					    ZFS_HISTOGRAM_IO_BLOCK / KB);
-					sprintf(val, "%lu/%lu",
+					sprintf(val, "%" PRIu64 "/%" PRIu64,
 					    spa->zfs_wio_histogram[i].size,
 					    spa->zfs_wio_histogram[i].count);
 					fnvlist_add_string(innvl, key, val);

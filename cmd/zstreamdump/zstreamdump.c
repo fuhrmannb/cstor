@@ -31,6 +31,7 @@
  */
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <libnvpair.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -121,7 +122,7 @@ dump_object_to_file(uint64_t object, char *buf, uint64_t len)
 
 	if (object_fd == -1 || last_object != object) {
 		snprintf(object_file, sizeof (object_file),
-		    "%lu.dump", object);
+		    "%" PRIu64 ".dump", object);
 		if (object_fd != -1)
 			close(object_fd);
 		object_fd = open(object_file, O_RDWR|O_CREAT|O_APPEND, O_RDWR);
@@ -559,7 +560,7 @@ main(int argc, char *argv[])
 				if (dump_object_to_file(drrw->drr_object,
 				    buf, payload_size) == -1) {
 					fprintf(stderr, "Failed to dump "
-					    "object:%lu\n", drrw->drr_object);
+					    "object:%" PRIu64 "\n", drrw->drr_object);
 					exit(1);
 				}
 			}

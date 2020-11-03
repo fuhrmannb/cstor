@@ -26,6 +26,8 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -300,7 +302,7 @@ kstat_install(kstat_t *ksp)
 	    ksp->ks_module, ksp->ks_instance, ksp->ks_name);
 
 	pthread_mutex_lock(&kstat_module_lock);
-	nvlist_add_uint64(kstat_nvl, buf, (uint64_t)ksp);
+	nvlist_add_uint64(kstat_nvl, buf, (uint64_t)(uintptr_t)ksp);
 	pthread_mutex_unlock(&kstat_module_lock);
 }
 
@@ -365,11 +367,10 @@ kstat_resize_raw(kstat_t *ksp)
 kstat_t *
 kstat_lookup_ksp(char *name)
 {
-
 	uint64_t tmp = 0;
 	if (nvlist_lookup_uint64(kstat_nvl, name, &tmp) != 0)
 		return (NULL);
-	return ((kstat_t *)tmp);
+	return ((kstat_t *)(uintptr_t)tmp);
 }
 
 int
@@ -386,15 +387,15 @@ kstat_show_named(kstat_t *ksp)
 	for (int i = 0; i < ksp->ks_ndata; i++, value++) {
 		switch (value->data_type) {
 			case KSTAT_DATA_INT64:
-				printf("%s: %ld\n", value->name,
+				printf("%s: %" PRId64 "\n", value->name,
 				    value->value.i64);
 				break;
 			case KSTAT_DATA_UINT64:
-				printf("%s: %lu\n", value->name,
+				printf("%s: %" PRIu64 "\n", value->name,
 				    value->value.ui64);
 				break;
 			case KSTAT_DATA_UINT32:
-				printf("%s: %u\n", value->name,
+				printf("%s: %" PRIu32 "\n", value->name,
 				    value->value.ui32);
 				break;
 			default:
@@ -1519,7 +1520,7 @@ kernel_init(int mode)
 	/* If we run inside a container get the cgroup mem limit */
 	f = fopen("/sys/fs/cgroup/memory/memory.limit_in_bytes", "r");
 	if (f != NULL) {
-		if (fscanf(f, "%lu", &cgroupmem) == 1) {
+		if (fscanf(f, "%" PRIu64, &cgroupmem) == 1) {
 			cgroupmem /= sysconf(_SC_PAGE_SIZE);
 			if (physmem > cgroupmem)
 				physmem = cgroupmem;
@@ -1527,7 +1528,7 @@ kernel_init(int mode)
 		fclose(f);
 	}
 
-	fprintf(stderr, "physmem = %lu pages (%.2f GB)\n", physmem,
+	fprintf(stderr, "physmem = %" PRIu64 " pages (%.2f GB)\n", physmem,
 	    (double)physmem * sysconf(_SC_PAGE_SIZE) / (1ULL << 30));
 
 	(void) snprintf(hw_serial, sizeof (hw_serial), "%ld",

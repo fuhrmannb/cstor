@@ -19,6 +19,7 @@
  * CDDL HEADER END
  */
 
+#include <inttypes.h>
 #include <sys/zfs_context.h>
 #include <sys/spa.h>
 #include <sys/dsl_destroy.h>
@@ -80,8 +81,8 @@ verify_replica_data(char *buf1, char *buf2, uint64_t len)
 	for (i = 0; i < len; i++) {
 		if (buf1[i] != buf2[i]) {
 			if (count == 0)
-				printf("error started for len:%lu,"
-				    " offset:%lu\n", len, i);
+				printf("error started for len:%" PRIu64 ","
+				    " offset:%" PRIu64 "\n", len, i);
 			if (!(count % 100))
 				printf("verification failed : %c : %c\n",
 				    buf1[i], buf2[i]);
@@ -134,14 +135,14 @@ replica_reader_thread(void *arg)
 
 		err = uzfs_read_data(zvol1, buf1[idx], offset, len, NULL);
 		if (err != 0) {
-			printf("IO error at offset: %lu len: %lu in read"
+			printf("IO error at offset: %" PRIu64 " len: %" PRIu64 " in read"
 			    " err(%d)\n", offset, len, err);
 			exit(1);
 		}
 
 		err = uzfs_read_data(zvol2, buf2[idx], offset, len, NULL);
 		if (err != 0) {
-			printf("IO error at offset: %lu len: %lu in read"
+			printf("IO error at offset: %" PRIu64 " len: %" PRIu64 " in read"
 			    " err(%d)\n", offset, len, err);
 			exit(1);
 		}
@@ -151,7 +152,7 @@ replica_reader_thread(void *arg)
 		mismatch_count += mismatch;
 
 		if (mismatch) {
-			printf("verification error at %lu, mismatch:%lu\n",
+			printf("verification error at %" PRIu64 ", mismatch:%" PRIu64 "\n",
 			    offset, mismatch);
 		}
 
@@ -164,8 +165,8 @@ replica_reader_thread(void *arg)
 		umem_free(buf2[j], sizeof (char) * (j + 1) * block_size);
 	}
 	if (silent == 0)
-		printf("Stopping read.. ios done: %lu total_read: %lu"
-		    " error:%lu\n", iops, r_data->len, mismatch_count);
+		printf("Stopping read.. ios done: %" PRIu64 " total_read: %" PRIu64 ""
+		    " error:%" PRIu64 "\n", iops, r_data->len, mismatch_count);
 
 	if (mismatch_count)
 		exit(1);
@@ -285,7 +286,7 @@ rebuild_replica_thread(void *arg)
 
 	uzfs_zvol_get_last_committed_io_no(from_zvol,
 	    HEALTHY_IO_SEQNUM, &latest_io);
-	printf("io number... healthy replica:%lu degraded replica:%lu\n",
+	printf("io number... healthy replica:%" PRIu64 " degraded replica:%" PRIu64 "\n",
 	    latest_io, r_info->base_io_num);
 	uzfs_zvol_set_rebuild_status(to_zvol, ZVOL_REBUILDING_SNAP);
 
@@ -329,7 +330,7 @@ rebuild_replica_thread(void *arg)
 		err = uzfs_write_data(to_zvol, node->buf, node->offset,
 		    node->len, &temp_metadata, B_TRUE);
 		if (err) {
-			printf("IO error at offset: %lu len: %lu in rebuild"
+			printf("IO error at offset: %" PRIu64 " len: %" PRIu64 " in rebuild"
 			    " err(%d)\n", node->offset, node->len, err);
 			exit(2);
 		}
@@ -342,7 +343,7 @@ rebuild_replica_thread(void *arg)
 
 	mutex_exit(&r_data.mtx);
 
-	printf("rebuilding finished.. written:%lu, actual written:%lu\n",
+	printf("rebuilding finished.. written:%" PRIu64 ", actual written:%" PRIu64 "\n",
 	    diff_data, to_zvol->rebuild_info.rebuild_bytes);
 	umem_free(io_list, sizeof (*io_list));
 	mutex_destroy(&r_data.mtx);
@@ -448,7 +449,7 @@ replica_writer_thread(void *arg)
 		err = uzfs_write_data(zvol1, buf[idx], offset,
 		    (idx + 1) * block_size, (blk_metadata_t *)&io_num, B_FALSE);
 		if (err != 0) {
-			printf("IO error at offset: %lu len: %lu in write"
+			printf("IO error at offset: %" PRIu64 " len: %" PRIu64 " in write"
 			    " err(%d)\n", offset, (idx + 1) * block_size, err);
 			exit(1);
 		}
@@ -469,7 +470,7 @@ replica_writer_thread(void *arg)
 			    (idx + 1) * block_size, (blk_metadata_t *)&io_num,
 			    B_FALSE);
 			if (err != 0) {
-				printf("IO error at offset: %lu len: %lu"
+				printf("IO error at offset: %" PRIu64 " len: %" PRIu64 ""
 				    " in write err(%d)\n", offset,
 				    (idx + 1) * block_size, err);
 				exit(1);
@@ -486,7 +487,7 @@ replica_writer_thread(void *arg)
 			uzfs_zvol_set_status(zvol2, ZVOL_STATUS_DEGRADED);
 
 			replica_active = B_TRUE;
-			printf("other replica missed %lu bytes during "
+			printf("other replica missed %" PRIu64 " bytes during "
 			    "downtime\n", mismatch_count);
 
 			/*
@@ -522,7 +523,7 @@ replica_writer_thread(void *arg)
 		umem_free(buf[j], sizeof (char) * (j + 1) * block_size);
 
 	if (silent == 0)
-		printf("Stopping write.. ios done: %lu\n", iops);
+		printf("Stopping write.. ios done: %" PRIu64 "\n", iops);
 
 	mutex_enter(&rebuild_info.mtx);
 	while (rebuild_info.active)

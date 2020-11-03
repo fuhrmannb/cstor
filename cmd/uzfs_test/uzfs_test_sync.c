@@ -18,6 +18,7 @@
  *
  * CDDL HEADER END
  */
+#include <inttypes.h>
 #include <sys/zfs_context.h>
 #include <uzfs_mgmt.h>
 #include <uzfs_io.h>
@@ -53,7 +54,7 @@ verify_fn(void *zv, char *buf, int block_size)
 		io_num = 0;
 
 	if (silent == 0)
-		printf("d:r:%d %d m:r:%lu %lu\n", buf[0], verify, io_num,
+		printf("d:r:%d %d m:r:%" PRIu64 " %" PRIu64 "\n", buf[0], verify, io_num,
 		    metaverify);
 
 	if (buf[0] != verify)
@@ -104,7 +105,7 @@ write_fn(void *zv, char *buf, int block_size)
 	txg2 = uzfs_synced_txg(zv);
 
 	if (txg1 == txg2) {
-		printf("uzfs_sync_data: %d %lu\n", buf[0], io_num);
+		printf("uzfs_sync_data: %d %" PRIu64 "\n", buf[0], io_num);
 		exit(0);
 	}
 }
